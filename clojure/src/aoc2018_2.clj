@@ -31,3 +31,120 @@
 ;; #################################
 ;; ###        Refactoring        ###
 ;; #################################
+
+(defn parse-input
+  "Parse input data, it makes txt file to string map.
+  input: file name (resources/day2.txt)
+  output: (\"aaaa\" \"bbbb\" ..)"
+  [input]
+  (map #(str %) (clojure.string/split-lines (slurp input))))
+
+(defn how-many-appear-in-string
+  "input: \"bababc\"
+  output: {:a 2 :b 3 :c 1}"
+  [input]
+  (->>
+    (char-array input)
+    (reduce #(update %1 (keyword (str %2)) (fnil + 0) 1)
+            {})))
+
+
+(defn check-n-times-in-coll
+  "input: {:a 1 :b 4 :c 3 :d 4 :e 5} 4
+  output: true (:b :d)"
+  [n-times coll]
+  (->>
+    (keys coll)
+    (filter (comp #{n-times} coll))
+    (count)
+    (< 0)))
+
+(defn check-two-or-three-times-in-coll
+  "input: {:a 2 :b 3 :c 3 :d 5}
+  output: {:2 true, :3 true}"
+  [coll]
+  (->>
+    {:2 (check-n-times-in-coll 2 coll) :3 (check-n-times-in-coll 3 coll)}))
+
+(defn boolean-to-int
+  ""
+  [input]
+  (get {false 0 true 1} input))
+
+(defn merge-two-or-three-map
+  ""
+  [exist new-map]
+  (->>
+    (assoc exist
+      :2 (+ (get exist :2) (boolean-to-int (get new-map :2)))
+      :3 (+ (get exist :3) (boolean-to-int (get new-map :3))))))
+
+(defn multiple-map-element
+  ""
+  [map]
+  (* (get map :2) (get map :3)))
+
+(defn compare-two-string
+  ""
+  [char-array1 char-array2]
+  (for [index (range (count char-array2))]
+    (if (= (get char-array1 index) (get char-array2 index))
+      (get char-array2 1)
+      false)))
+
+;; 두 coll 에 대한 loop 도는 방법
+;; 루프의 결과값이 아닌 루프를 돌며 값을 업데이트 하는 방식으로 구현가능한지
+;; var c = "";
+;; for(a in "asdf")
+;;   c += a;
+;; return c;
+
+(comment
+  (compare-two-string (map str (char-array "asdff")) (map str (char-array "f")))
+  (type (map str (char-array "f")))
+  (->>
+    (parse-input "resources/day2.txt")
+    (map how-many-appear-in-string)
+    (map check-two-or-three-times-in-coll)
+    (reduce merge-two-or-three-map {:2 0 :3 0})
+    (multiple-map-element))
+  (->>
+    (parse-input "resources/day2.txt")
+    (reductions conj [])
+    (reduce compare-two-string [])))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
