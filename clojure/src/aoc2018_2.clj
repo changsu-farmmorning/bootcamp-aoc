@@ -54,8 +54,8 @@
   output: true (:b :d)"
   [n-times coll]
   (->>
-    (keys coll)
-    (filter (comp #{n-times} coll))
+    (vals coll)                                             ;; [1 4 3 5]
+    (filter #{n-times})                                     ;; #{3} [1 4 3 5]
     (count)
     (< 0)))
 
@@ -74,77 +74,48 @@
 (defn merge-two-or-three-map
   ""
   [exist new-map]
-  (->>
-    (assoc exist
-      :2 (+ (get exist :2) (boolean-to-int (get new-map :2)))
-      :3 (+ (get exist :3) (boolean-to-int (get new-map :3))))))
+  (assoc exist
+    :2 (+ (get exist :2) (boolean-to-int (get new-map :2)))
+    :3 (+ (get exist :3) (boolean-to-int (get new-map :3)))))
 
 (defn multiple-map-element
   ""
   [map]
   (* (get map :2) (get map :3)))
 
-(defn compare-two-string
+(defn find-same-char-between-two-string
   ""
-  [char-array1 char-array2]
-  (for [index (range (count char-array2))]
-    (if (= (get char-array1 index) (get char-array2 index))
-      (get char-array2 1)
-      false)))
-
-;; 두 coll 에 대한 loop 도는 방법
-;; 루프의 결과값이 아닌 루프를 돌며 값을 업데이트 하는 방식으로 구현가능한지
-;; var c = "";
-;; for(a in "asdf")
-;;   c += a;
-;; return c;
-
-(comment
-  (compare-two-string (map str (char-array "asdff")) (map str (char-array "f")))
-  (type (map str (char-array "f")))
+  [str1 str2]
   (->>
-    (parse-input "resources/day2.txt")
-    (map how-many-appear-in-string)
+    (map #(if (= %1 %2)
+            %1
+            nil) str1 str2)
+    (remove nil?)
+    (apply str)))
+
+(defn part1-solver
+  ""
+  [input]
+  (->>
+    input
+    (map frequencies)
     (map check-two-or-three-times-in-coll)
     (reduce merge-two-or-three-map {:2 0 :3 0})
-    (multiple-map-element))
+    (multiple-map-element)))
+
+(defn part2-solver
+  ""
+  [input]
   (->>
-    (parse-input "resources/day2.txt")
-    (reductions conj [])
-    (reduce compare-two-string [])))
+    (for [first input
+          second input
+          :when (not= first second)
+          :let [same-character (find-same-char-between-two-string first second)]]
+      same-character)
+    (filter #(= (count %) (- (count (first input)) 1)))
+    (first)))
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+(comment
+  (def input (parse-input "resources/day2.txt"))
+  (part1-solver input)
+  (part2-solver input))

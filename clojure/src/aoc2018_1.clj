@@ -23,7 +23,10 @@
   (->> (parse-input "resources/day1.txt")
        (cycle)
        (reductions +)
-       (reduce #(if (contains? %1 %2)
+       (reduce #(if (%1 %2)
                   (reduced %2)
                   (conj %1 %2)) #{})))
+
+
+
 
