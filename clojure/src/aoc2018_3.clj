@@ -24,8 +24,6 @@
 ;; 겹치는 지역의 갯수를 출력하시오. (위의 예시에서는 4)
 
 
-
-
 ;; 파트 2
 ;; 입력대로 모든 격자를 채우고 나면, 정확히 한 ID에 해당하는 영역이 다른 어떤 영역과도 겹치지 않음
 ;; 위의 예시에서는 ID 3 이 ID 1, 2와 겹치지 않음. 3을 출력.
@@ -35,12 +33,6 @@
   ""
   [source]
   (map #(str %) (clojure.string/split-lines (slurp source))))
-
-(defn get-data-from-str
-  "input: \"#1 @ 1,3: 4x4\" \"#2 @ 3,1: 4x4\"
-  output: (\"1\" \"1,3\" \"4x4\")"
-  [input-str]
-  (rest (re-find #"#(\d+) @ (\d+,\d+): (\d+x\d+)" input-str)))
 
 (defn get-data-by-pattern-from-str
   ""
@@ -52,8 +44,8 @@
 
 (defn get-size
   ""
-  [size x-or-y]
-  (get-data-by-pattern-from-str size #"(\d+)x(\d+)" x-or-y))
+  [size x|y]
+  (get-data-by-pattern-from-str size #"(\d+)x(\d+)" x|y))
 
 (defn get-pos
   ""
@@ -62,16 +54,16 @@
 
 (defn get-range
   ""
-  [pos size f]
+  [[pos size] f]
   (let [x (get-pos pos f)
         x_size (get-size size f)]
     (range x (+ x x_size))))
 
 (defn update-area-from-input
   ""
-  [area [id pos size]]
-  (->> (for [x (get-range pos size first)                   ;; 구조분해로 변경
-             y (get-range pos size second)]
+  [area [id & pos-size]]
+  (->> (for [x (get-range pos-size first)                   ;; 구조분해로 변경
+             y (get-range pos-size second)]
          (if (contains? area [x y])
            {[x y] (vec (flatten [(get area [x y]) id]))}
            {[x y] [id]}))
@@ -82,7 +74,6 @@
 ;keys [id pos size]
 ; :as obj
 ;{:keys [id pos size]}
-
 (defn find-overlap-map
   ""
   [area]
@@ -94,27 +85,30 @@
 (defn find-not-overlap
   ""
   [area-map]
-  (clojure.set/difference (get area-map :ids) (get area-map :overlap)))
+  (clojure.set/difference (:ids area-map) (:overlap area-map)))
 
+(defn aaa
+  ""
+  [{:pos {:x pos_x :y pos_y} :size {:x size_x :y size_y}}]
+  (println pos_x))
 
 (comment
-  (keys {:id 1 :pos 3 :size 4} :as obj)
-  (type #"#(\d+) @ (\d+,\d+): (\d+x\d+)")
-  (def input '("#1 @ 1,3: 4x4" "#2 @ 3,1: 4x4" "#3 @ 5,5: 2x2"))
-  (def input (parse-input "resources/day3.txt"))
-  (->> input
-       (map get-data-from-str)
-       (reduce update-area-from-input {})
-       (filter (fn [[_ v]] (< 1 (count v))))
-       count)
+  (let [{:keys [pos size]} {:pos  {:x 1
+                                   :y 2}
+                            :size {:x 3
+                                   :y 4}}]
+    (prn (:x pos) pos size))
+  (->> {:pos {:x x :y y} :size {:x x :y y}}
+       (aaa))
+  (def input '("#1 @ 1,3: 4x4" "#2 @ 3,1: 4x4" "#3 @ 5,5: 2x2")) ;; sample
+  (def input (parse-input "resources/day3.txt"))            ;; real-data
   (->> input
        (map #(rest (re-find #"#(\d+) @ (\d+,\d+): (\d+x\d+)" %)))
        (reduce update-area-from-input {})
        (filter (fn [[_ v]] (< 1 (count v))))
        count)
-  (type #{})
   (->> input
-       (map get-data-from-str)
+       (map #(rest (re-find #"#(\d+) @ (\d+,\d+): (\d+x\d+)" %)))
        (reduce update-area-from-input {})
        find-overlap-map
        (reduce (fn [acc [k v]]
