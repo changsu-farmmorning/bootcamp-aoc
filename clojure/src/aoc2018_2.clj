@@ -54,9 +54,9 @@
   output: true (:b :d)"
   [n-times coll]
   (->>
-    (vals coll)                                             ;; [1 4 3 5]
-    (filter #{n-times})                                     ;; #{3} [1 4 3 5]
-    (count)
+    (vals coll)
+    (filter #{n-times})
+    count
     (< 0)))
 
 (defn check-two-or-three-times-in-coll
@@ -86,34 +86,31 @@
 (defn find-same-char-between-two-string
   ""
   [str1 str2]
-  (->>
-    (map #(if (= %1 %2)
-            %1
-            nil) str1 str2)
-    (remove nil?)
-    (apply str)))
+  (->> (map #(if (= %1 %2)
+               %1
+               nil) str1 str2)
+       (remove nil?)
+       (apply str)))
 
 (defn part1-solver
   ""
   [input]
-  (->>
-    input
-    (map frequencies)
-    (map check-two-or-three-times-in-coll)
-    (reduce merge-two-or-three-map {:2 0 :3 0})
-    (multiple-map-element)))
+  (->> input
+       (map frequencies)
+       (map check-two-or-three-times-in-coll)
+       (reduce merge-two-or-three-map {:2 0 :3 0})
+       multiple-map-element))
 
 (defn part2-solver
   ""
   [input]
-  (->>
-    (for [first input
-          second input
-          :when (not= first second)
-          :let [same-character (find-same-char-between-two-string first second)]]
-      same-character)
-    (filter #(= (count %) (- (count (first input)) 1)))
-    (first)))
+  (->> (for [first input
+             second input
+             :when (not= first second)
+             :let [same-character (find-same-char-between-two-string first second)]]
+         same-character)
+       (filter #(= (count %) (- (count (first input)) 1)))
+       first))
 
 (comment
   (def input (parse-input "resources/day2.txt"))
