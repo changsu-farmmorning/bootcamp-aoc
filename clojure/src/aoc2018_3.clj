@@ -40,26 +40,25 @@
   "input: \"#1 @ 1,3: 4x4\" \"#2 @ 3,1: 4x4\"
   output: (\"1\" \"1,3\" \"4x4\")"
   [input-str]
-  (drop 1 (re-find #"#(\d+) @ (\d+,\d+): (\d+x\d+)" input-str)))
+  (rest (re-find #"#(\d+) @ (\d+,\d+): (\d+x\d+)" input-str)))
 
 (defn get-data-by-pattern-from-str
   ""
   [input pattern pos]
-  (->>
-    (re-find pattern input)
-    (drop 1)
-    (pos)
-    (Integer/parseInt)))
+  (->> (re-find pattern input)
+       (drop 1)
+       (pos)
+       (Integer/parseInt)))
 
 (defn get-size
   ""
   [size x-or-y]
-  (get-data-by-pattern-from-str size #"(\d)x(\d)" x-or-y))
+  (get-data-by-pattern-from-str size #"(\d+)x(\d+)" x-or-y))
 
 (defn get-pos
   ""
   [pos x-or-y]
-  (get-data-by-pattern-from-str pos #"(\d),(\d)" x-or-y))
+  (get-data-by-pattern-from-str pos #"(\d+),(\d+)" x-or-y))
 
 (defn get-range
   ""
@@ -70,24 +69,60 @@
 
 (defn update-area-from-input
   ""
-  [area [id, pos, size]]
-  (->>
-    (for [x (get-range pos size first)
-          y (get-range pos size second)]
-      (if (contains? area [x, y])
-        {[x, y] (vec (flatten [(get area [x, y]) id]))}
-        {[x, y] [id]}))
-    (apply merge)
-    (merge area)))
+  [area [id pos size]]
+  (->> (for [x (get-range pos size first)                   ;; 구조분해로 변경
+             y (get-range pos size second)]
+         (if (contains? area [x y])
+           {[x y] (vec (flatten [(get area [x y]) id]))}
+           {[x y] [id]}))
+       (apply merge area)))
+
+; {:id 1 :pos 3 :size 4}
+;keys
+;keys [id pos size]
+; :as obj
+;{:keys [id pos size]}
+
+(defn find-overlap-map
+  ""
+  [area]
+  (for [[_ ids] area]
+    (if (< 1 (count ids))
+      [:overlap (set ids)]
+      [:ids (set ids)])))
+
+(defn find-not-overlap
+  ""
+  [area-map]
+  (clojure.set/difference (get area-map :ids) (get area-map :overlap)))
+
 
 (comment
+  (keys {:id 1 :pos 3 :size 4} :as obj)
+  (type #"#(\d+) @ (\d+,\d+): (\d+x\d+)")
   (def input '("#1 @ 1,3: 4x4" "#2 @ 3,1: 4x4" "#3 @ 5,5: 2x2"))
   (def input (parse-input "resources/day3.txt"))
-  (->>
-    input
-    (map get-data-from-str)
-    (reduce update-area-from-input {})
-    (reduce #(if (< 1 (count (second %2)))
-               (+ %1 1)
-               %1) 0)))
+  (->> input
+       (map get-data-from-str)
+       (reduce update-area-from-input {})
+       (filter (fn [[_ v]] (< 1 (count v))))
+       count)
+  (->> input
+       (map #(rest (re-find #"#(\d+) @ (\d+,\d+): (\d+x\d+)" %)))
+       (reduce update-area-from-input {})
+       (filter (fn [[_ v]] (< 1 (count v))))
+       count)
+  (type #{})
+  (->> input
+       (map get-data-from-str)
+       (reduce update-area-from-input {})
+       find-overlap-map
+       (reduce (fn [acc [k v]]
+                 (if (= k :overlap)
+                   (merge acc {:overlap (clojure.set/union (get acc :overlap) v)})
+                   (merge acc {:ids (clojure.set/union (get acc :ids) v)})))
+               {:overlap #{} :ids #{}})
+       find-not-overlap
+       first))
+
 
