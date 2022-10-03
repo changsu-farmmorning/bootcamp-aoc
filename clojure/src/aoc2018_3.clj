@@ -87,19 +87,12 @@
   [area-map]
   (clojure.set/difference (:ids area-map) (:overlap area-map)))
 
-(defn aaa
-  ""
-  [{:pos {:x pos_x :y pos_y} :size {:x size_x :y size_y}}]
-  (println pos_x))
-
 (comment
   (let [{:keys [pos size]} {:pos  {:x 1
                                    :y 2}
                             :size {:x 3
                                    :y 4}}]
     (prn (:x pos) pos size))
-  (->> {:pos {:x x :y y} :size {:x x :y y}}
-       (aaa))
   (def input '("#1 @ 1,3: 4x4" "#2 @ 3,1: 4x4" "#3 @ 5,5: 2x2")) ;; sample
   (def input (parse-input "resources/day3.txt"))            ;; real-data
   (->> input
