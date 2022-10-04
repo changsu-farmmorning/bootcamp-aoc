@@ -24,7 +24,8 @@
     (Character/isLowerCase s) (Character/toUpperCase s)))
 
 (defn react-polymer
-  ""
+  "aAbBcC -> ()
+  aBcD -> (\\a \\B \\c \\D)"
   [p]
   (reduce (fn [acc val]
             (if (= (first acc) (change-capitals val))
@@ -34,18 +35,25 @@
           p))
 
 (defn get-alphabet-pattern
-  ""
+  "(#\"A|a\" ... #\"Z|z\")"
   []
   (->> (map #(str (char %) "|" (char (+ % 32))) (range 65 91))
        (map re-pattern)))
 
 (defn get-all-replace-one-unit-polymer
-  ""
+  "dabAcCaCBAcCcaDA
+  ->
+   ([\\d \\b \\c \\C \\C \\B \\c \\C \\c \\D]
+   [\\d \\a \\A \\c \\C \\a \\C \\A \\c \\C \\c \\a \\D \\A]
+   [\\d \\a \\b \\A \\a \\B \\A \\a \\D \\A]
+   [\\a \\b \\A \\c \\C \\a \\C \\B \\A \\c \\C \\c \\a \\A]
+   [\\d \\a \\b \\A \\c \\C \\a \\C \\B \\A \\c \\C \\c \\a \\D \\A] ...)"
   [p]
   (for [pattern (get-alphabet-pattern)]
     (into [] (clojure.string/replace p pattern ""))))
 
 (comment
+  (def input "dabAcCaCBAcCcaDA")
   (def input (slurp "resources/day5.txt"))
   (->> input
        (into [])

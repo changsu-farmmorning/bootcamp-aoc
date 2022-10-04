@@ -34,7 +34,7 @@
 ;; 주어진 분(minute)에 가장 많이 잠들어 있던 가드의 ID과 그 분(minute)을 곱한 값을 구하라.
 
 (defn minute-from-date
-  ""
+  "11-04 14:22 -> 22"
   [date]
   (->> (re-find #"\d+-\d+ (\d+):(\d+)" date)
        rest
@@ -43,7 +43,9 @@
 
 
 (defn make-map-from-line
-  ""
+  "[1518-11-01 00:00] Guard #10 begins shift -> {:key Guard :id 10 :min 00}
+  [1518-11-01 00:05] falls asleep -> {:key falls :id 0 :min 5}
+  [1518-11-01 00:25] wakes up -> {:key wakes :id 0 min 25"
   [line]
   (->> (re-find #"\[\d+-(\d+-\d+ \d+:\d+)\] (\S+) (\S+)" line)
        ((fn [[_ date key id]]
@@ -52,32 +54,33 @@
                            :min (minute-from-date date)}}))))
 
 (defn get-minute-data
-  ""
+  "({:sleep 45, :wakeup 55} {:sleep 36, :wakeup 46} {:sleep 40, :wakeup 50})
+  -> {36 1 37 1 ... 40 2 41 2 ... 45 3 ... 54 1}"
   [times]
-  (->> times
-       (map (fn [times]
+  (->> (map (fn [times]
               (->> (for [minute (range (:sleep times) (:wakeup times))]
                      {minute 1})
-                   (into (sorted-map)))))
+                   (into (sorted-map))))
+            times)
        (apply merge-with +)))
 
 (defn sum-of-values
-  ""
-  [maps]
+  "{36 1 37 2 38 3 39 4} -> 10 (1 + 2 + 3 + 4)"
+  [m]
   (reduce (fn [acc [_ v]]
             (+ acc v))
           0
-          maps))
+          m))
 
-(defn max-of-values
-  ""
+(defn key-of-max-values
+  "{36 1 37 2 38 3 39 4} -> 39 (value: 4)"
   [maps]
   (first (sort-by second #(> %1 %2) maps)))
 
 (defn multiply-id-minute
-  ""
+  "{:id 5 :minutes {36 1 37 2 .. 43 6}} -> 215 (5 * 43)"
   [{:keys [id minutes]}]
-  (* id (first (max-of-values minutes))))
+  (* id (first (key-of-max-values minutes))))
 
 (comment
   (parse-input "resources/day4.txt")
