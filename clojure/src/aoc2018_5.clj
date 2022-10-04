@@ -1,4 +1,4 @@
-(ns aoc2018_5)
+(ns aoc2018_5)                                              ;; java import
 ;; 파트 1
 ;; 입력: dabAcCaCBAcCcaDA
 
@@ -53,6 +53,7 @@
     (into [] (clojure.string/replace p pattern ""))))
 
 (comment
+  (get-alphabet-pattern)
   (def input "dabAcCaCBAcCcaDA")
   (def input (slurp "resources/day5.txt"))
   (->> input

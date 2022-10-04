@@ -64,14 +64,6 @@
             times)
        (apply merge-with +)))
 
-(defn sum-of-values
-  "{36 1 37 2 38 3 39 4} -> 10 (1 + 2 + 3 + 4)"
-  [m]
-  (reduce (fn [acc [_ v]]
-            (+ acc v))
-          0
-          m))
-
 (defn key-of-max-values
   "{36 1 37 2 38 3 39 4} -> 39 (value: 4)"
   [maps]
@@ -84,6 +76,8 @@
 
 (comment
   (parse-input "resources/day4.txt")
+  (max-of-values {36 1 37 2 38 3 39 4})
+  (apply max [1 2 3 4])
   (def input '("[1518-11-01 00:00] Guard #10 begins shift"
                 "[1518-11-01 00:05] falls asleep"
                 "[1518-11-01 00:25] wakes up"
@@ -115,9 +109,9 @@
              "falls" (update acc (:id acc) (fn [data]
                                              (conj (or data []) {:sleep min})))))
          {})
-       (filter (fn [[k _]] (not= k :id)))
+       (remove #(= :id (first %)))
        (map (fn [[id times]] {:id id :minutes (get-minute-data times)}))
-       (sort-by :minutes #(> (second (max-of-values %1)) (second (max-of-values %2))))
+       (sort-by :minutes #(> (apply + (vals %1)) (apply + (vals %2))))
        first
        multiply-id-minute)
 
@@ -133,17 +127,9 @@
              "falls" (update acc (:id acc) (fn [data]
                                              (conj (or data []) {:sleep min})))))
          {})
-       (filter (fn [[k _]] (not= k :id)))
+       (remove #(= :id (first %)))
        (map (fn [[id times]] {:id id :minutes (get-minute-data times)}))
-       (sort-by :minutes #(> (sum-of-values %1) (sum-of-values %2)))
+       (sort-by :minutes #(> (apply max (vals %1)) (apply max (vals %2))))
        first
        multiply-id-minute))
-
-;{:id 677,
-;  :minutes {10 1,
-;            11 1,
-;            12 2, ...
-;            }
-
-
 
