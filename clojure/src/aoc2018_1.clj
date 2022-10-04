@@ -10,3 +10,23 @@
 ;; 예) +3, +3, +4, -2, -4 는 10이 처음으로 두번 나오는 숫자임.
 ;; 0 -> 3 (+3) -> 6 (+3) -> 10(+4) -> 8(-2) -> 4(-4) -> 7(+3) -> 10(+3) -> ...
 
+
+;; cycle, reductions, reduced, repeat
+;; PPAP(parse - process - aggregate - print)
+
+(defn parse-input [input]
+  (map #(read-string %) (clojure.string/split-lines (slurp input))))
+
+(comment
+  (parse-input "resources/day1.txt")
+  (reduce + (parse-input "resources/day1.txt"))
+  (->> (parse-input "resources/day1.txt")
+       (cycle)
+       (reductions +)
+       (reduce #(if (%1 %2)
+                  (reduced %2)
+                  (conj %1 %2)) #{})))
+
+
+
+

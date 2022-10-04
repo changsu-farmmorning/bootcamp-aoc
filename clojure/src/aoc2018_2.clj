@@ -31,3 +31,88 @@
 ;; #################################
 ;; ###        Refactoring        ###
 ;; #################################
+
+(defn parse-input
+  "Parse input data, it makes txt file to string map.
+  input: file name (resources/day2.txt)
+  output: (\"aaaa\" \"bbbb\" ..)"
+  [input]
+  (map #(str %) (clojure.string/split-lines (slurp input))))
+
+(defn how-many-appear-in-string
+  "input: \"bababc\"
+  output: {:a 2 :b 3 :c 1}"
+  [input]
+  (->>
+    (char-array input)
+    (reduce #(update %1 (keyword (str %2)) (fnil + 0) 1)
+            {})))
+
+
+(defn check-n-times-in-coll
+  "input: {:a 1 :b 4 :c 3 :d 4 :e 5} 4
+  output: true (:b :d)"
+  [n-times coll]
+  (->>
+    (vals coll)
+    (filter #{n-times})
+    count
+    (< 0)))
+
+(defn check-two-or-three-times-in-coll
+  "input: {:a 2 :b 3 :c 3 :d 5}
+  output: {:2 true, :3 true}"
+  [coll]
+  (->>
+    {:2 (check-n-times-in-coll 2 coll) :3 (check-n-times-in-coll 3 coll)}))
+
+(defn boolean-to-int
+  ""
+  [input]
+  (get {false 0 true 1} input))
+
+(defn merge-two-or-three-map
+  ""
+  [exist new-map]
+  (assoc exist
+    :2 (+ (get exist :2) (boolean-to-int (get new-map :2)))
+    :3 (+ (get exist :3) (boolean-to-int (get new-map :3)))))
+
+(defn multiple-map-element
+  ""
+  [map]
+  (* (get map :2) (get map :3)))
+
+(defn find-same-char-between-two-string
+  ""
+  [str1 str2]
+  (->> (map #(if (= %1 %2)
+               %1
+               nil) str1 str2)
+       (remove nil?)
+       (apply str)))
+
+(defn part1-solver
+  ""
+  [input]
+  (->> input
+       (map frequencies)
+       (map check-two-or-three-times-in-coll)
+       (reduce merge-two-or-three-map {:2 0 :3 0})
+       multiple-map-element))
+
+(defn part2-solver
+  ""
+  [input]
+  (->> (for [first input
+             second input
+             :when (not= first second)
+             :let [same-character (find-same-char-between-two-string first second)]]
+         same-character)
+       (filter #(= (count %) (- (count (first input)) 1)))
+       first))
+
+(comment
+  (def input (parse-input "resources/day2.txt"))
+  (part1-solver input)
+  (part2-solver input))

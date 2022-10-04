@@ -1,4 +1,5 @@
-(ns aoc2018_4)
+(ns aoc2018_4
+  (:require [util :refer [parse-input]]))
 ;; 파트 1
 ;; 입력:
 
@@ -31,3 +32,104 @@
 
 ;; 파트 2
 ;; 주어진 분(minute)에 가장 많이 잠들어 있던 가드의 ID과 그 분(minute)을 곱한 값을 구하라.
+
+(defn minute-from-date
+  "11-04 14:22 -> 22"
+  [date]
+  (->> (re-find #"\d+-\d+ (\d+):(\d+)" date)
+       rest
+       second
+       Integer/parseInt))
+
+
+(defn make-map-from-line
+  "[1518-11-01 00:00] Guard #10 begins shift -> {:key Guard :id 10 :min 00}
+  [1518-11-01 00:05] falls asleep -> {:key falls :id 0 :min 5}
+  [1518-11-01 00:25] wakes up -> {:key wakes :id 0 min 25"
+  [line]
+  (->> (re-find #"\[\d+-(\d+-\d+ \d+:\d+)\] (\S+) (\S+)" line)
+       ((fn [[_ date key id]]
+          {(keyword date) {:key key
+                           :id  (Integer/parseInt (or (first (rest (re-find #"#(\d+)" id))) "0"))
+                           :min (minute-from-date date)}}))))
+
+(defn get-minute-data
+  "({:sleep 45, :wakeup 55} {:sleep 36, :wakeup 46} {:sleep 40, :wakeup 50})
+  -> {36 1 37 1 ... 40 2 41 2 ... 45 3 ... 54 1}"
+  [times]
+  (->> (map (fn [times]
+              (->> (for [minute (range (:sleep times) (:wakeup times))]
+                     {minute 1})
+                   (into (sorted-map))))
+            times)
+       (apply merge-with +)))
+
+(defn key-of-max-values
+  "{36 1 37 2 38 3 39 4} -> 39 (value: 4)"
+  [maps]
+  (first (sort-by second #(> %1 %2) maps)))
+
+(defn multiply-id-minute
+  "{:id 5 :minutes {36 1 37 2 .. 43 6}} -> 215 (5 * 43)"
+  [{:keys [id minutes]}]
+  (* id (first (key-of-max-values minutes))))
+
+(comment
+  (parse-input "resources/day4.txt")
+  (max-of-values {36 1 37 2 38 3 39 4})
+  (apply max [1 2 3 4])
+  (def input '("[1518-11-01 00:00] Guard #10 begins shift"
+                "[1518-11-01 00:05] falls asleep"
+                "[1518-11-01 00:25] wakes up"
+                "[1518-11-01 00:30] falls asleep"
+                "[1518-11-01 00:55] wakes up"
+                "[1518-11-01 23:58] Guard #99 begins shift"
+                "[1518-11-02 00:40] falls asleep"
+                "[1518-11-02 00:50] wakes up"
+                "[1518-11-03 00:05] Guard #10 begins shift"
+                "[1518-11-03 00:24] falls asleep"
+                "[1518-11-03 00:29] wakes up"
+                "[1518-11-04 00:02] Guard #99 begins shift"
+                "[1518-11-04 00:36] falls asleep"
+                "[1518-11-04 00:46] wakes up"
+                "[1518-11-05 00:03] Guard #99 begins shift"
+                "[1518-11-05 00:45] falls asleep"
+                "[1518-11-05 00:55] wakes up"))             ;
+  (def input (parse-input "resources/day4.txt"))
+
+  (->> input
+       (map make-map-from-line)
+       (into (sorted-map))
+       (reduce
+         (fn [acc [_ {:keys [key id min]}]]
+           (case key
+             "Guard" (assoc acc :id id)
+             "wakes" (update acc (:id acc) (fn [data]
+                                             (conj (rest data) (assoc (first data) :wakeup min))))
+             "falls" (update acc (:id acc) (fn [data]
+                                             (conj (or data []) {:sleep min})))))
+         {})
+       (remove #(= :id (first %)))
+       (map (fn [[id times]] {:id id :minutes (get-minute-data times)}))
+       (sort-by :minutes #(> (apply + (vals %1)) (apply + (vals %2))))
+       first
+       multiply-id-minute)
+
+  (->> input
+       (map make-map-from-line)
+       (into (sorted-map))
+       (reduce
+         (fn [acc [_ {:keys [key id min]}]]
+           (case key
+             "Guard" (assoc acc :id id)
+             "wakes" (update acc (:id acc) (fn [data]
+                                             (conj (rest data) (assoc (first data) :wakeup min))))
+             "falls" (update acc (:id acc) (fn [data]
+                                             (conj (or data []) {:sleep min})))))
+         {})
+       (remove #(= :id (first %)))
+       (map (fn [[id times]] {:id id :minutes (get-minute-data times)}))
+       (sort-by :minutes #(> (apply max (vals %1)) (apply max (vals %2))))
+       first
+       multiply-id-minute))
+
