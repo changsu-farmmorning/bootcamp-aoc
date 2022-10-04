@@ -14,3 +14,46 @@
 ;; 주어진 문자열에서 한 유닛 (대문자와 소문자)을 전부 없앤 후 반응시켰을 때, 가장 짧은 문자열의 길이를 리턴하시오.
 ;; 예를 들어 dabAcCaCBAcCcaDA 에서 a/A를 없애고 모두 반응시키면 dbCBcD가 되고 길이는 6인데 비해,
 ;; 같은 문자열에서 c/C를 없애고 모두 반응시키면 daDA가 남고 길이가 4이므로 4가 가장 짧은 길이가 됨.
+
+(defn change-capitals
+  "a -> A
+  A -> a"
+  [s]
+  (cond
+    (Character/isUpperCase s) (Character/toLowerCase s)
+    (Character/isLowerCase s) (Character/toUpperCase s)))
+
+(defn react-polymer
+  ""
+  [p]
+  (reduce (fn [acc val]
+            (if (= (first acc) (change-capitals val))
+              (rest acc)
+              (conj acc val)))
+          ()
+          p))
+
+(defn get-alphabet-pattern
+  ""
+  []
+  (->> (map #(str (char %) "|" (char (+ % 32))) (range 65 91))
+       (map re-pattern)))
+
+(defn get-all-replace-one-unit-polymer
+  ""
+  [p]
+  (for [pattern (get-alphabet-pattern)]
+    (into [] (clojure.string/replace p pattern ""))))
+
+(comment
+  (def input (slurp "resources/day5.txt"))
+  (->> input
+       (into [])
+       react-polymer
+       count)
+
+  (->> input
+       get-all-replace-one-unit-polymer
+       (map react-polymer)
+       (map count)
+       (apply min)))

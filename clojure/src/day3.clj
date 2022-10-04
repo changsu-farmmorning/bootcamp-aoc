@@ -6,4 +6,3 @@
                (slurp)
                (clojure.string/split-lines)))
 
-(count input)
