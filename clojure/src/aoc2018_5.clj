@@ -17,18 +17,27 @@
 
 (defn change-capitals
   "a -> A
-  A -> a"
+  A -> a
+  java 함수 사용"
   [s]
   (cond
     (Character/isUpperCase s) (Character/toLowerCase s)
     (Character/isLowerCase s) (Character/toUpperCase s)))
+
+(defn check-is-reactable
+  "두 문자가 대소문자만 바꾼 것인지 확인
+  clojure 내장함수 사용. java 라이브러리보다 훨씬 빠르다"
+  [v1 v2]
+  (and (not= (or v1 "") v2)
+       (= (clojure.string/upper-case (or v1 "")) (clojure.string/upper-case v2))
+       (= (clojure.string/lower-case (or v1 "")) (clojure.string/lower-case v2))))
 
 (defn react-polymer
   "aAbBcC -> ()
   aBcD -> (\\a \\B \\c \\D)"
   [p]
   (reduce (fn [acc val]
-            (if (= (first acc) (change-capitals val))
+            (if (check-is-reactable (first acc) val)
               (rest acc)
               (conj acc val)))
           ()
@@ -59,10 +68,14 @@
   (->> input
        (into [])
        react-polymer
-       count)
-
+       count
+       time)                                                ;; 891.893584 msecs -> 63.377958 msecs  14배
+  (->> input
+       (into [])
+       (map clojure.string/upper-case))
   (->> input
        get-all-replace-one-unit-polymer
        (map react-polymer)
        (map count)
-       (apply min)))
+       (apply min)                                          ;; 16851.824541 msecs -> 453.063208 msecs  37배
+       time))

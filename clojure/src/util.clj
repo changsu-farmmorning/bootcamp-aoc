@@ -3,4 +3,4 @@
 (defn parse-input
   ""
   [source]
-  (map #(str %) (clojure.string/split-lines (slurp source))))
+  (map str (clojure.string/split-lines (slurp source))))

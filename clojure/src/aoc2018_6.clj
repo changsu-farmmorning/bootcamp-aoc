@@ -1,4 +1,5 @@
-(ns aoc2018_6)
+(ns aoc2018_6
+  (:require [clojure.math :refer [round]]))
 
 ;; 파트 1
 ;; 입력 : 좌표의 쌍이 N개 주어짐
@@ -65,12 +66,41 @@
 
 ;; N이 10000 미만인 안전한 지역의 사이즈를 구하시오.
 
-(defn get-meta-data
+(defn except-dots
+  ""
+  [dots dot]
+  (nil? (and (not-empty (filter #(and
+                                   (not= (:x %) (:x dot))
+                                   (>= (:x %) (:x dot))
+                                   (>= (:y %) (:y dot)))
+                                dots))
+             (not-empty (filter #(and
+                                   (not= (:x %) (:x dot))
+                                   (>= (:x %) (:x dot))
+                                   (<= (:y %) (:y dot)))
+                                dots))
+             (not-empty (filter #(and
+                                   (not= (:x %) (:x dot))
+                                   (<= (:x %) (:x dot))
+                                   (>= (:y %) (:y dot)))
+                                dots))
+             (not-empty (filter #(and
+                                   (not= (:x %) (:x dot))
+                                   (<= (:x %) (:x dot))
+                                   (<= (:y %) (:y dot)))
+                                dots)))))
+
+(defn with-meta-data
   ""
   [dots]
-  {:max  {:x (apply max (map :x dots)) :y (apply max (map :y dots))}
-   :min  {:x (apply min (map :x dots)) :y (apply min (map :y dots))}
-   :dots dots})
+  {:max         {:x (apply max (map :x dots)) :y (apply max (map :y dots))}
+   :min         {:x (apply min (map :x dots)) :y (apply min (map :y dots))}
+   :center      {:x (round (/ (apply + (map :x dots))
+                              (count dots)))
+                 :y (round (/ (apply + (map :y dots))
+                              (count dots)))}
+   :except-dots (set (filter #(except-dots dots %) dots))
+   :dots        dots})
 
 (defn parse-input
   ""
@@ -78,12 +108,14 @@
   (->> (map #(rest (re-find #"(\d+), (\d+)" %))
             (clojure.string/split-lines (slurp source)))
        (map (fn [[x y]]
-              {:x (read-string x) :y (read-string y)}))))
+              {:x (read-string x) :y (read-string y)}))))   ;; read-string 은 지양
 
 (defn distance-from-dot
   ""
   [from to]
-  (+ (abs (- (:x from) (:x to))) (abs (- (:y from) (:y to)))))
+  (+
+    (abs (- (:x from) (:x to)))
+    (abs (- (:y from) (:y to)))))
 
 (defn check-duplicated-distance
   ""
@@ -100,31 +132,92 @@
        (sort-by :distance <)
        check-duplicated-distance))
 
+
 (defn draw-area
   ""
   [d]
-  (assoc d :area (for [x (range (:x (:min d)) (:x (:max d)))
-                       y (range (:y (:min d)) (:y (:max d)))]
-                   {{:x x :y y} (get-nearest-dot {:x x :y y :dots (:dots d)})})))
+  (assoc d :area (->> (for [x (range (:x (:min d)) (:x (:max d)))
+                            y (range (:y (:min d)) (:y (:max d)))]
+                        [{:x x :y y} (get-nearest-dot {:x x :y y :dots (:dots d)})])
+                      (filter #(some? (second %)))
+                      (into {}))))
 
 (defn find-largest-area
   ""
-  [{:keys [dot]}]
-  ())
-
-(defn find-have-largest-area-dot
-  ""
   [d]
-  ())
+  (->> (:area d)
+       (reduce (fn [acc [_ {:keys [dot]}]]
+                 (update acc dot (fnil + 0) 1))
+               {})
+       (remove #(contains? (:except-dots d) (first %)))
+       (apply max-key val)
+       val))
+
+(defn sum-of-distance
+  ""
+  [{:keys [dots dot]}]
+  (apply +
+         (map
+           #(+
+              (abs (- (:x dot) (:x %)))
+              (abs (- (:y dot) (:y %))))
+           dots)))
+
+(defn cal-safe-area
+  ""
+  [iter limit {:keys [center dots]}]
+  (+
+    (->> (for [x (range (- (:x center) iter)
+                        (+ (:x center) iter))]
+           (sum-of-distance {:dots dots
+                             :dot  {:x x
+                                    :y (- (:y center) iter)}}))
+         (filter #(> limit %))
+         count)
+    (->> (for [y (range (- (:y center) iter)
+                        (+ (:y center) iter))]
+           (sum-of-distance {:dots dots
+                             :dot  {:x (+ (:x center) iter)
+                                    :y y}}))
+         (filter #(> limit %))
+         count)
+    (->> (for [x (range (inc (- (:x center) iter))
+                        (inc (+ (:x center) iter)))]
+           (sum-of-distance {:dots dots
+                             :dot  {:x x
+                                    :y (+ (:y center) iter)}}))
+         (filter #(> limit %))
+         count)
+    (->> (for [y (range (inc (- (:y center) iter))
+                        (inc (+ (:y center) iter)))]
+           (sum-of-distance {:dots dots
+                             :dot  {:x (- (:x center) iter)
+                                    :y y}}))
+         (filter #(> limit %))
+         count)))
+
+(defn find-safe-area
+  ""
+  [limit d]
+  (apply +
+         1                                                  ; center of dots
+         (for [iter (range) :when (not= iter 0) :while (< 0 (cal-safe-area iter limit d))]
+           (cal-safe-area iter limit d))))
 
 (comment
-  (def input [{:x 1, :y 1} {:x 1, :y 6} {:x 8, :y 3} {:x 3, :y 4} {:x 5, :y 5} {:x 8, :y 9}])
-  (parse-input "resources/day6.txt")
-  (->> input
-       get-meta-data
+  (def input '({:x 1 :y 1}
+               {:x 1 :y 6}
+               {:x 8 :y 3}
+               {:x 3 :y 4}
+               {:x 5 :y 5}
+               {:x 8 :y 9}))
+  (->> (parse-input "resources/day6.txt")
+       with-meta-data
        draw-area
-       find-have-largest-area-dot)
-  (= {:x 1 :y 2} {:x 1 :y 3 :z 3}))
+       find-largest-area)
+  (->> (parse-input "resources/day6.txt")
+       with-meta-data
+       (find-safe-area 10000)))
 
 
 

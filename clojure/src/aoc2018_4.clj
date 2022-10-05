@@ -94,7 +94,7 @@
                 "[1518-11-04 00:46] wakes up"
                 "[1518-11-05 00:03] Guard #99 begins shift"
                 "[1518-11-05 00:45] falls asleep"
-                "[1518-11-05 00:55] wakes up"))             ;
+                "[1518-11-05 00:55] wakes up"))
   (def input (parse-input "resources/day4.txt"))
 
   (->> input
@@ -111,8 +111,7 @@
          {})
        (remove #(= :id (first %)))
        (map (fn [[id times]] {:id id :minutes (get-minute-data times)}))
-       (sort-by :minutes #(> (apply + (vals %1)) (apply + (vals %2))))
-       first
+       (apply max-key #(apply + (vals (:minutes %))))
        multiply-id-minute)
 
   (->> input
@@ -129,7 +128,6 @@
          {})
        (remove #(= :id (first %)))
        (map (fn [[id times]] {:id id :minutes (get-minute-data times)}))
-       (sort-by :minutes #(> (apply max (vals %1)) (apply max (vals %2))))
-       first
+       (apply max-key #(apply max (vals (:minutes %))))
        multiply-id-minute))
 
