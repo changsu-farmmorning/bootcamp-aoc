@@ -210,7 +210,7 @@
                {:x 8 :y 3}
                {:x 3 :y 4}
                {:x 5 :y 5}
-               {:x 8 :y 9}))
+               {:x 8 :y 9}))                                ; sample data
   (->> (parse-input "resources/day6.txt")
        with-meta-data
        draw-area
