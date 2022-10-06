@@ -24,32 +24,36 @@
 (defn parse-input
   ""
   [source]
-  (->> (map #(Integer/parseInt %) (clojure.string/split-lines (slurp source)))))
+  (->> (map parse-long (clojure.string/split-lines (slurp source)))))
 
 (defn find-two-entries
   ""
   [target m]
-  (->> (for [entry1 m
-             entry2 m
-             :when (=
-                     target
-                     (+ entry1 entry2))]
-         [entry1 entry2])
-       first
-       (apply *)))
+  (let [with-idx (map-indexed vector m)]
+    (->> (for [[idx1 val1] with-idx
+               [idx2 val2] with-idx
+               :when (and
+                       (= target (+ val1 val2))
+                       (not= idx1 idx2))]
+           [val1 val2])
+         first
+         (apply *))))
 
 (defn find-three-entries
   ""
   [target m]
-  (->> (for [entry1 m
-             entry2 m
-             entry3 m
-             :when (=
-                     target
-                     (+ entry1 entry2 entry3))]
-         [entry1 entry2 entry3])
-       first
-       (apply *)))
+  (let [with-idx (map-indexed vector m)]
+    (->> (for [[idx1 val1] with-idx
+               [idx2 val2] with-idx
+               [idx3 val3] with-idx
+               :when (and
+                       (= target (+ val1 val2 vla3))
+                       (not= idx1 idx2)
+                       (not= idx1 idx3)
+                       (not= idx2 idx3))]
+           [val1 val2 val3])
+         first
+         (apply *))))
 
 
 (comment
@@ -59,10 +63,22 @@
                 299
                 675
                 1456))
+  (for [a (map-indexed vector input)]
+    (second a))
   (->> (parse-input "resources/2020_day1.txt")
        (find-two-entries 2020))
   (->> (parse-input "resources/2020_day1.txt")
        (find-three-entries 2020)))
+
+;; :req-un :req 차이점 ?
+;; defrecord ?
+
+;; spec -> 클래스 or 팩토리 패턴
+;; spec merge -> 상속
+;; multi spec -> 다형성
+;; using for validation -> 데코레이터 패
+
+
 
 
 
