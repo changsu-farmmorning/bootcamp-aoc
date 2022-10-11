@@ -5,7 +5,7 @@
   ""
   [line]
   (let [[inst val] (rest (re-find #"(\S+) (\S+)" line))]
-    {:type inst :val (parse-long val)}))
+    {:type (keyword inst) :val (parse-long val)}))
 
 (defn parse-input
   ""
@@ -27,13 +27,16 @@
   [{:keys [inst-idx code] :as program}]
   (let [{:keys [type val]} (nth code inst-idx)]
     (case type
-      "nop" (-> (update program :inst-idx + 1)
-                (update :inst-idx-set conj inst-idx))
-      "acc" (-> (update program :inst-idx + 1)
-                (update :accumulator + val)
-                (update :inst-idx-set conj inst-idx))
-      "jmp" (-> (update program :inst-idx + val)
-                (update :inst-idx-set conj inst-idx)))))
+      :nop (-> program
+               (update :inst-idx inc)
+               (update :inst-idx-set conj inst-idx))
+      :acc (-> program
+               (update :inst-idx inc)
+               (update :accumulator + val)
+               (update :inst-idx-set conj inst-idx))
+      :jmp (-> program
+               (update :inst-idx + val)
+               (update :inst-idx-set conj inst-idx)))))
 
 (defn run-program
   ""
@@ -42,7 +45,7 @@
        (take-while (fn [{:keys [inst-idx inst-idx-set code]}]
                      (and
                        (nil? (inst-idx-set inst-idx))
-                       (< (int inst-idx) (count code)))))
+                       (< inst-idx (count code)))))
        last))
 
 (defn nth-idx-from-vector
@@ -55,10 +58,10 @@
   ""
   [code n]
   (->> (map-indexed vector code)
-       (filter (fn [[idx {:keys [type]}]]
+       (filter (fn [[_ {:keys [type]}]]
                  (or
-                   (= type "nop")
-                   (= type "jmp"))))
+                   (= type :nop)
+                   (= type :jmp))))
        (nth-idx-from-vector (dec n))
        first))
 
@@ -69,8 +72,11 @@
         target-idx (find-nth-repairable-inst code n)
         {:keys [type val]} (nth code target-idx)]
     (case type
-      "nop" (assoc program :code (assoc code target-idx {:type "jmp" :val val}))
-      "jmp" (assoc program :code (assoc code target-idx {:type "nop" :val val})))))
+      :nop (assoc program :code
+                          (assoc code target-idx {:type :jmp :val val})) ;assoc-in
+      ;assoc-in
+      :jmp (assoc program :code
+                          (assoc code target-idx {:type :nop :val val})))))
 
 (defn is-correct-run
   ""
@@ -83,14 +89,16 @@
   (->> (repair-nth-inst program n)
        run-program))
 
-; take-until ?
-
 ;(defn find-correct-program
 ;  ""
 ;  [program]
 ;  (->> (iterate inc 1)
 ;       (map #(nth-code-repair-run % program))
 ;       (take-while #(not (is-correctly-run %)))))
+
+; [false false false true false false ...]
+
+; drop-while
 
 (defn find-nth-inst-to-correct-program
   ""
@@ -100,7 +108,7 @@
                          is-correct-run
                          not))
        last
-       (+ 1)))
+       inc))
 
 (defn run-correct-program
   ""
@@ -118,6 +126,9 @@
        setup-program
        run-correct-program
        :accumulator)
+
+  (#{1 2 3} 5)
+
   (->> (parse-input "resources/2020_day8_sample.txt")
        setup-program
        run-program)
