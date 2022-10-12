@@ -36,7 +36,7 @@
              :all-steps (into #{} (keys m))
              :order (name first-step)
              :done #{}
-             :time 0
+             :time -1
              :workers [{:step     nil
                         :duration 0}
                        {:step     nil
