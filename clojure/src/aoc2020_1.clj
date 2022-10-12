@@ -70,13 +70,6 @@
   (->> (parse-input "resources/2020_day1.txt")
        (find-three-entries 2020)))
 
-;; :req-un :req 차이점 ?
-;; defrecord ?
-
-;; spec -> 클래스 or 팩토리 패턴
-;; spec merge -> 상속
-;; multi spec -> 다형성
-;; using for validation -> 데코레이터 패
 
 
 

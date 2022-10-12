@@ -51,7 +51,7 @@
 (defn nth-idx-from-vector
   ""
   [idx v]
-  (if (< idx (count v))
+  (when (< idx (count v))
     (nth v idx)))
 
 (defn find-nth-repairable-inst
@@ -72,11 +72,8 @@
         target-idx (find-nth-repairable-inst code n)
         {:keys [type val]} (nth code target-idx)]
     (case type
-      :nop (assoc program :code
-                          (assoc code target-idx {:type :jmp :val val})) ;assoc-in
-      ;assoc-in
-      :jmp (assoc program :code
-                          (assoc code target-idx {:type :nop :val val})))))
+      :nop (assoc-in program [:code target-idx] {:type :jmp :val val})
+      :jmp (assoc-in program [:code target-idx] {:type :nop :val val}))))
 
 (defn is-correct-run
   ""
@@ -89,33 +86,20 @@
   (->> (repair-nth-inst program n)
        run-program))
 
-;(defn find-correct-program
-;  ""
-;  [program]
-;  (->> (iterate inc 1)
-;       (map #(nth-code-repair-run % program))
-;       (take-while #(not (is-correctly-run %)))))
-
-; [false false false true false false ...]
-
-; drop-while
-
 (defn find-nth-inst-to-correct-program
   ""
   [program]
   (->> (iterate inc 1)
-       (take-while #(->> (nth-code-repair-run program %)
+       (drop-while #(->> (nth-code-repair-run program %)
                          is-correct-run
                          not))
-       last
-       inc))
+       first))
 
 (defn run-correct-program
   ""
   [program]
   (->> (find-nth-inst-to-correct-program program)
        (nth-code-repair-run program)))
-
 
 (comment
   (->> (parse-input "resources/2020_day8.txt")
@@ -126,8 +110,6 @@
        setup-program
        run-correct-program
        :accumulator)
-
-  (#{1 2 3} 5)
 
   (->> (parse-input "resources/2020_day8_sample.txt")
        setup-program
