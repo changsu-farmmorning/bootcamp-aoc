@@ -216,6 +216,7 @@
        (apply + 1)))
 
 (comment
+  (-> 5 #_inc #_inc inc)
   (->> (parse-input "resources/day6.txt")
        with-meta-data
        draw-area

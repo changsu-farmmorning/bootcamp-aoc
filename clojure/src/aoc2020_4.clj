@@ -87,6 +87,7 @@
                                       #(is-digit (str/replace-first % #"in" ""))
                                       #(check-in-range 59 76
                                                        (str/replace-first % #"in" "")))))
+
 (s/def :passport/hcl (s/and string?
                             #(str/includes? % "#")
                             #(= 7 (count %))
@@ -135,7 +136,7 @@
   [source]
   (->> (map str (clojure.string/split-lines (slurp source)))
        (partition-by empty?)
-       (filter #(not= [""] %))                              ; 빈 스트링만을 가진 경우를 제거
+       (filter #(not= [""] %))
        (map parse-clause)))
 
 (comment
@@ -145,4 +146,6 @@
   (->> (parse-input "resources/2020_day4_sample.txt")
        (filter #(s/valid? :passport/passport %))
        count))
+
+
 
