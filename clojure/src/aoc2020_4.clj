@@ -109,6 +109,7 @@
 (s/def :parser/word #(re-find #"(\S+):(\S+)" %))
 
 (defn parse-word
+  "각 단어가 유효한 단어인지 확인한 후에 map 에 담는다."
   [word]
   {:pre [(s/valid? :parser/word word)]}
   (->> (re-find #"(\S+):(\S+)" word)
@@ -116,6 +117,7 @@
        (apply hash-map)))
 
 (defn parse-line
+  "pre condition 을 적용시켜 각 라인이 유효한지 확인한 후에 데이터를 map 형태로 만든다."
   [line]
   {:pre [(s/valid? :parser/line line)]}
   (->> (clojure.string/split line #" ")
@@ -126,13 +128,14 @@
        (into {})))
 
 (defn parse-clause
-  ""
+  "하나의 여권정보를 담고있는 clause 를 파싱한다."
   [clause]
   (->> (map parse-line clause)
        (into {})))
 
 (defn parse-input
-  ""
+  "empty line 을 기준으로 여권정보들이 나뉘어 있다.
+  각 clause 들을 파싱하여 [{여권정보},...] 의 형태로 만든다."
   [source]
   (->> (map str (clojure.string/split-lines (slurp source)))
        (partition-by empty?)

@@ -27,7 +27,7 @@
   (->> (map parse-long (clojure.string/split-lines (slurp source)))))
 
 (defn find-two-entries
-  ""
+  "배열에서 두 값의 합이 target 인 경우를 찾아 두 수를 곱하는 함수"
   [target m]
   (let [with-idx (map-indexed vector m)]
     (->> (for [[idx1 val1] with-idx
